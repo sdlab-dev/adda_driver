@@ -15,18 +15,18 @@
   <version xil_pn:ise_version="14.7" xil_pn:schema_version="2"/>
 
   <files>
-    <file xil_pn:name="../../source/top.ucf" xil_pn:type="FILE_UCF">
+    <file xil_pn:name="../../source/basic/top.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/top.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/top.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/fmc150_components.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/fmc150_components.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/adc_sample.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/adc_sample.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="14"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
@@ -42,19 +42,19 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/fifo2memiface.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/fifo2memiface.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="18"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/udp_parser.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/udp_parser.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/misc.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/misc.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/simple_dualportram.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/simple_dualportram.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="24"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
@@ -64,11 +64,11 @@
     <file xil_pn:name="../../source/etrees/library/e7udpip_kintex7.ngc" xil_pn:type="FILE_NGC">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/memiface2fifo.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/memiface2fifo.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="108"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/dac_sample.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/dac_sample.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="109"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
@@ -80,7 +80,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="112"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/udp_packet_send_in_fifo_with_trigger.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/udp_packet_send_in_fifo_with_trigger.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="113"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
@@ -111,29 +111,29 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="113"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/sync_reset.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../source/basic/sync_reset.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="149"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
     <file xil_pn:name="../../library/FMC150_sample.ngc" xil_pn:type="FILE_NGC">
       <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/dds.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/dds.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/clock_gen.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/clock_gen.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/fifo_1024_128.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/fifo_1024_128.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/fifo_16384_128.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/fifo_16384_128.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/fifo_1024_32.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/fifo_1024_32.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/dualport_blockram.xise" xil_pn:type="FILE_ISE">
+    <file xil_pn:name="../../source/xilinx/dualport_blockram.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
   </files>
@@ -254,7 +254,7 @@
     <property xil_pn:name="Ignore User Timing Constraints Map" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Ignore User Timing Constraints Par" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Implementation Top" xil_pn:value="Architecture|top|RTL" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Implementation Top File" xil_pn:value="../../source/top.vhd" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Implementation Top File" xil_pn:value="../../source/basic/top.vhd" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Include 'uselib Directive in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Include SIMPRIM Models in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
