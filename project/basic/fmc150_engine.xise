@@ -107,10 +107,6 @@
     <file xil_pn:name="../../library/f32c_with_upl_kintex7.ngc" xil_pn:type="FILE_NGC">
       <association xil_pn:name="Implementation" xil_pn:seqID="24"/>
     </file>
-    <file xil_pn:name="../../source/xilinx/dualport_blockram.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="113"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
     <file xil_pn:name="../../source/basic/sync_reset.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="149"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
@@ -131,9 +127,6 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
     <file xil_pn:name="../../source/xilinx/fifo_1024_32.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="../../source/xilinx/dualport_blockram.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
   </files>
