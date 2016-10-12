@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <arpa/inet.h>
+
 
 #include "sdlab_utils.h"
 
