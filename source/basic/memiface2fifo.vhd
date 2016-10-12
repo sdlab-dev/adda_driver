@@ -7,8 +7,7 @@ use unisim.vcomponents.all;
 
 entity memiface2fifo is
   generic (
-    TX_COUNT_STEP : integer := 256;
-    RX_COUNT_STEP : integer := 4
+    MAX_COUNT : integer := 1 * 1024 * 1024
     );
   port (
     p_Clk : in std_logic;
@@ -38,6 +37,12 @@ end memiface2fifo;
 
 architecture RTL of memiface2fifo is
 
+  constant TX_COUNT_STEP : integer := 256; -- "1024 byte" corresponds to "256 samples for 2ch",
+                                           -- because a sample/ch is 2Byte.
+  constant RX_COUNT_STEP : integer := 4;   -- "128 bit" corresponds to "4 samples for 2ch",
+                                           -- because a sample/ch is 16bit.
+  constant BURST_READ_BYTES : integer := 1024; -- 32words * 32bytes/word
+    
   attribute mark_debug : string;
   attribute keep       : string;
 
@@ -68,6 +73,10 @@ architecture RTL of memiface2fifo is
   attribute keep of prog_full_d : signal is "true";
 
   signal w_read_count : unsigned(31 downto 0);
+  
+  signal w_read_count_d : std_logic_vector(31 downto 0);
+  attribute mark_debug of w_read_count_d : signal is "true";
+  attribute keep of w_read_count_d : signal is "true";
 
 begin
 
@@ -120,13 +129,13 @@ begin
               tx_count               <= tx_count + TX_COUNT_STEP;
 
               --if tx_count = MAX_COUNT - TX_COUNT_STEP then  -- last request
-              if tx_count = w_read_count - TX_COUNT_STEP then  -- last request
+              if (tx_count + TX_COUNT_STEP = w_read_count) or (tx_count + TX_COUNT_STEP = MAX_COUNT) then  -- last request
                 emit_state <= EMIT_IDLE;
                 address    <= unsigned(p_DDR3_MEMORY_OFFSET);
               else
 --                emit_state <= EMIT_RUN; -- emit next read request
                 emit_state <= EMIT_RUN_NEXT;   -- emit next read request
-                address    <= address + 1024;  -- 32words * 32bytes/word
+                address    <= address + BURST_READ_BYTES; -- 1024;  -- 32words * 32bytes/word
               end if;
               
             end if;
@@ -208,7 +217,7 @@ begin
             
             if p_MemIface_UPL_Reply_En = '0' then  -- End of UPL Packet Receiving
               --if rx_count = MAX_COUNT then
-              if rx_count = w_read_count then
+              if rx_count = w_read_count or rx_count = MAX_COUNT then
                 recv_state <= RECV_IDLE;
               else
                 recv_state <= RECV_RUN;            -- wait for next read reply
@@ -222,13 +231,14 @@ begin
     end if;
   end process RECV_REPLY;
 
-  SYS: process(p_Clk)
+  SYS : process(p_Clk)
   begin
     if p_Clk'event and p_Clk = '1' then
-      tx_count_d  <= std_logic_vector(tx_count);
-      rx_count_d  <= std_logic_vector(rx_count);
-      prog_full_d <= p_FIFO_PROG_FULL;
-      reg_kick    <= p_KICK;
+      tx_count_d     <= std_logic_vector(tx_count);
+      rx_count_d     <= std_logic_vector(rx_count);
+      prog_full_d    <= p_FIFO_PROG_FULL;
+      reg_kick       <= p_KICK;
+      w_read_count_d <= std_logic_vector(w_read_count);
     end if;
   end process SYS;
   

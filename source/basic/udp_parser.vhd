@@ -60,6 +60,11 @@ end udp_parser;
 
 architecture rtl of udp_parser is
 
+  constant DEFAULT_ADDA_SAMPLING_POINTS : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
+  constant MIN_POINTS : unsigned(31 downto 0) := to_unsigned(1 * 1024 * 1024, 32);
+  constant MAX_POINTS : unsigned(31 downto 0) := to_unsigned(128 * 1024 * 1024, 32);
+
+
   type state_type is (STATE_IDLE,
                       STATE_RX_UDP,
                       STATE_TX_ACK, STATE_TX_NACK, STATE_TX_BRAM,
@@ -77,23 +82,26 @@ architecture rtl of udp_parser is
                           SUB_DRAM_RECEIVING);
   signal sub_state : sub_state_type := SUB_DRAM_WAIT_ACK;
 
-  type adc_state_type is (ADC_KICK,
+  type adc_state_type is (ADC_PREPARE,
+                          ADC_KICK,
                           ADC_START_WAIT,
                           ADC_STOP_WAIT
                           );
-  signal adc_state : adc_state_type := ADC_KICK;
+  signal adc_state : adc_state_type := ADC_PREPARE;
 
-  type dac_state_type is (DAC_KICK,
+  type dac_state_type is (DAC_PREPARE,
+                          DAC_KICK,
                           DAC_START_WAIT,
                           DAC_STOP_WAIT
                           );
-  signal dac_state : dac_state_type := DAC_KICK;
+  signal dac_state : dac_state_type := DAC_PREPARE;
 
-  type dac_adc_state_type is (DAC_ADC_KICK,
-                          DAC_ADC_START_WAIT,
-                          DAC_ADC_STOP_WAIT
-                          );
-  signal dac_adc_state : dac_adc_state_type := DAC_ADC_KICK;
+  type dac_adc_state_type is (DAC_ADC_PREPARE,
+                              DAC_ADC_KICK,
+                              DAC_ADC_START_WAIT,
+                              DAC_ADC_STOP_WAIT
+                              );
+  signal dac_adc_state : dac_adc_state_type := DAC_ADC_PREPARE;
   
   signal tx_counter : signed(31 downto 0);
   signal rx_counter : signed(31 downto 0);
@@ -102,7 +110,7 @@ architecture rtl of udp_parser is
   signal dst_ip_addr    : std_logic_vector(31 downto 0);
   signal src_port       : std_logic_vector(15 downto 0);
   signal dst_port       : std_logic_vector(15 downto 0);
-  signal payload_length : std_logic_vector(31 downto 0);
+  signal payload_length : unsigned(31 downto 0);
 
 ----- begin bram signals
   signal w_ram_addr       : signed(31 downto 0) := (others => '0');
@@ -116,8 +124,6 @@ architecture rtl of udp_parser is
   
   signal ram_write_buf  : std_logic_vector(127 downto 0) := (others => '0');
   signal ram_write_addr : signed(31 downto 0) := (others => '0');
-
-  constant DEFAULT_ADDA_SAMPLING_POINTS : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
 
 ----- begin rtl -----
 begin
@@ -205,7 +211,7 @@ begin
                   src_port <= p_UDP_RX_DATA(15 downto 0);
                   
                 when 3 =>
-                  payload_length <= p_UDP_RX_DATA;  -- Length & CRC
+                  payload_length <= unsigned(p_UDP_RX_DATA);  -- Length
                   
                 when 4 =>
 
@@ -246,15 +252,15 @@ begin
                     when X"00000007" =>
                       state            <= STATE_CMD_AD_START;
                       p_ADC_ADDR_RESET <= '1';
-                      adc_state        <= ADC_KICK;
+                      adc_state        <= ADC_PREPARE;
                       
                     when X"00000008" =>
                       state            <= STATE_CMD_DA_START;
-                      dac_state        <= DAC_KICK;
+                      dac_state        <= DAC_PREPARE;
                       
                     when X"00000009" =>
                       state            <= STATE_CMD_DA_AD_START;
-                      dac_adc_state    <= DAC_ADC_KICK;
+                      dac_adc_state    <= DAC_ADC_PREPARE;
 
                     when others =>
                       state <= STATE_CMD_NULL;
@@ -437,15 +443,20 @@ begin
 ---------- end STATE_CMD_DRAM_WRITE
 --------- begin STATE_CMD_AD_START
           when STATE_CMD_AD_START =>
-            if p_UDP_RX_ENABLE = '1' then
-              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
-            end if;
             case adc_state is
+              when ADC_PREPARE =>
+                if p_UDP_RX_ENABLE = '1' and
+                   payload_length > 4 and
+                   unsigned(p_UDP_RX_DATA) >= MIN_POINTS and
+                   unsigned(p_UDP_RX_DATA) <= MAX_POINTS then
+                  p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+                end if;
+                adc_state <= ADC_KICK;
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when ADC_KICK =>
                 p_ADC_ADDR_RESET <= '0';
                 p_ADC_KICK <= '1';
                 adc_state <= ADC_START_WAIT;
-                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when ADC_START_WAIT =>
                 if p_ADC_RUN = '1' then
                   p_ADC_KICK <= '0';
@@ -464,10 +475,16 @@ begin
 --------- end STATE_CMD_AD_START
 --------- begin STATE_CMD_DA_START
           when STATE_CMD_DA_START =>
-            if p_UDP_RX_ENABLE = '1' then
-              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
-            end if;
             case dac_state is
+              when DAC_PREPARE =>
+                if p_UDP_RX_ENABLE = '1' and
+                   payload_length > 4 and
+                   unsigned(p_UDP_RX_DATA) >= MIN_POINTS and
+                   unsigned(p_UDP_RX_DATA) <= MAX_POINTS then
+                  p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+                end if;
+                dac_state <= DAC_KICK;
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when DAC_KICK =>
                 p_DAC_KICK <= '1';
                 dac_state <= DAC_START_WAIT;
@@ -490,16 +507,21 @@ begin
 --------- end STATE_CMD_DA_START
 --------- begin STATE_CMD_DA_AD_START
           when STATE_CMD_DA_AD_START =>
-            if p_UDP_RX_ENABLE = '1' then
-              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
-            end if;
             case dac_adc_state is
+              when DAC_ADC_PREPARE =>
+                if p_UDP_RX_ENABLE = '1' and
+                   payload_length > 4 and
+                   unsigned(p_UDP_RX_DATA) >= MIN_POINTS and
+                   unsigned(p_UDP_RX_DATA) <= MAX_POINTS then
+                  p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+                end if;
+                dac_adc_state <= DAC_ADC_KICK;
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when DAC_ADC_KICK =>
                 p_DAC_KICK <= '1';
                 p_ADC_KICK_AFTER_DAC_START <= '1';
                 dac_adc_state <= DAC_ADC_START_WAIT;
                 p_ADC_ADDR_RESET <= '0';
-                p_ADDA_SAMPLING_POINTS_WE <= '1';
                 
               when DAC_ADC_START_WAIT =>
                 if p_DAC_RUN = '1' then

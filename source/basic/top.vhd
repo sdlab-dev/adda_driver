@@ -294,7 +294,7 @@ architecture RTL of top is
 
   component dac_sample
     generic (
-      MAX_COUNT : integer := 512 * 1024 * 1024
+      MAX_COUNT : integer := 128 * 1024 * 1024
       );
     port (
       p_Clk : in std_logic;
@@ -321,8 +321,7 @@ architecture RTL of top is
 
   component memiface2fifo
     generic (
-      TX_COUNT_STEP : integer := 256;
-      RX_COUNT_STEP : integer := 4
+      MAX_COUNT : integer := 1 * 1024 * 1024
       );
     port (
       p_Clk : in std_logic;
@@ -1055,7 +1054,7 @@ begin
 
   U_DAC_SAMPLE: dac_sample
     generic map(
-      MAX_COUNT => 512 * 1024 * 1024 -- 512M (1024*1024) samples
+      MAX_COUNT => 128 * 1024 * 1024 -- 128M (1024*1024) samples
       )
     port map(
       p_Clk => UPLGlobalClk,
@@ -1081,10 +1080,7 @@ begin
 
   U_MEMIFACE2FIFO: memiface2fifo
     generic map(
-      TX_COUNT_STEP => 256, -- "1024 byte" corresponds to "256 samples for 2ch",
-                            -- because a sample/ch is 2Byte.
-      RX_COUNT_STEP => 4 -- "128 bit" corresponds to "4 samples for 2ch",
-                         -- because a sample/ch is 16bit.
+      MAX_COUNT => 128 * 1024 * 1024
       )
     port map(
       p_Clk => UPLGlobalClk,
@@ -1224,8 +1220,15 @@ begin
     p_DEBUG => open
     );
 
-  w_adda_sampling_points <= w_adda_sampling_points_0 when w_adda_sampling_points_we_0 = '1' else
-                            w_adda_sampling_points_1 when w_adda_sampling_points_we_1 = '1' else
-                            w_adda_sampling_points;
+  process(UPLGlobalClk)
+  begin
+    if rising_edge(UPLGlobalClk) then
+      if w_adda_sampling_points_we_0 = '1' then
+        w_adda_sampling_points <= w_adda_sampling_points_0;
+      elsif w_adda_sampling_points_we_1 = '1' then
+        w_adda_sampling_points <= w_adda_sampling_points_1;
+      end if;
+    end if;
+  end process;
 
 end RTL;

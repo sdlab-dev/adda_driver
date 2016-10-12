@@ -102,7 +102,15 @@ architecture RTL of dac_sample is
   
   attribute mark_debug of w_sampling_points : signal is "true";
   attribute keep of w_sampling_points : signal is "true";
+
+  signal w_sampling_points_d : unsigned(31 downto 0);
+  signal emit_counter_d : unsigned(31 downto 0);
   
+  attribute mark_debug of w_sampling_points_d : signal is "true";
+  attribute keep of w_sampling_points_d : signal is "true";
+  attribute mark_debug of emit_counter_d : signal is "true";
+  attribute keep of emit_counter_d : signal is "true";
+
 begin
 
   w_dac_sample_kick <= p_DAC_KICK;
@@ -221,7 +229,8 @@ begin
                 when "01" =>
                   buf_reg_a <= buf_reg_a(47 downto 0) & X"0000";
                   buf_reg_b <= buf_reg_b(47 downto 0) & X"0000";
-                  if emit_counter < X"000FFFFE" then -- except last 1 word
+                  --if emit_counter < X"000FFFFE" then -- except last 1 word
+                  if emit_counter < w_sampling_points-2 or emit_counter < MAX_COUNT-2 then -- except last 1 word
                     w_fifo_re <= '1'; -- for next next
                   else
                     w_fifo_re <= '0';
@@ -265,6 +274,8 @@ begin
       w_fifo_re_d    <= w_fifo_re;
       w_fifo_empty_d <= w_fifo_empty;
       w_fifo_prog_empty_d <= w_fifo_prog_empty;
+      w_sampling_points_d <= w_sampling_points;
+      emit_counter_d <= emit_counter;
     end if;
   end process;
 

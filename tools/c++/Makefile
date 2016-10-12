@@ -1,4 +1,4 @@
-APP = led_off led_on bram_read bram_write_test ddr_write_test ddr_read adc_on dac_on
+APP = led_off led_on bram_read bram_write_test ddr_write_test ddr_read adc_on dac_on adc_dac_on
 
 all: $(APP)
 
@@ -9,6 +9,9 @@ led_off: led_off.o sdlab_utils.o
 	g++ -o $@ $^
 
 led_on: led_on.o sdlab_utils.o
+	g++ -o $@ $^
+
+adc_dac_on: adc_dac_on.o sdlab_utils.o
 	g++ -o $@ $^
 
 adc_on: adc_on.o sdlab_utils.o
