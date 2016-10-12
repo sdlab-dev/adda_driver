@@ -6,6 +6,10 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity adc_sample is
+
+  generic (
+    MAX_SAMPLING_POINTS : integer := 512 * 1024 * 1024
+  );
   port (
     p_Clk : in std_logic;
     p_Reset : in std_logic;
@@ -17,10 +21,13 @@ entity adc_sample is
     p_ADC_DATA_RE    : in  std_logic;
     p_ADC_DATA_COUNT : out std_logic_vector(31 downto 0);
 
+    p_SAMPLING_POINTS : in std_logic_vector(31 downto 0);
+    
     -- p_ADC_Clk domain
     p_ADC_CLK    : in std_logic;
     p_ADC_DATA_A : in std_logic_vector(15 downto 0);
     p_ADC_DATA_B : in std_logic_vector(15 downto 0)
+    
     );
 end adc_sample;
 
@@ -91,6 +98,10 @@ architecture RTL of adc_sample is
 
   attribute mark_debug of w_fifo_full_d  : signal is "true";
   attribute keep of w_fifo_full_d  : signal is "true";
+
+  signal w_sampling_points : unsigned(31 downto 0);
+  attribute mark_debug of w_sampling_points : signal is "true";
+  attribute keep of w_sampling_points : signal is "true";
   
 begin
 
@@ -149,12 +160,13 @@ begin
             end if;
             recv_counter <= (others => '0');
             w_fifo_we    <= '0';
+            w_sampling_points <= unsigned(p_SAMPLING_POINTS);
           ------------------------------------------
             
           ------------------------------------------
           when RECV =>
-            
-            if recv_counter < X"00100000" then -- before 1M (1024*1024) samples
+--            if recv_counter < X"00100000" then -- before 1M (1024*1024) samples
+            if (recv_counter < w_sampling_points) and (recv_counter < MAX_SAMPLING_POINTS) then
               recv_counter <= recv_counter + 1;
             else
               recv_counter <= (others => '0');

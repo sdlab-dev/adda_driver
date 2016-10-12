@@ -21,6 +21,8 @@ entity udp_parser is
     p_DAC_KICK       : out std_logic;
     p_DAC_RUN        : in  std_logic;
     p_ADC_KICK_AFTER_DAC_START : out std_logic;
+    p_ADDA_SAMPLING_POINTS     : out std_logic_vector(31 downto 0);
+    p_ADDA_SAMPLING_POINTS_WE  : out std_logic;
 
     -- UDP input
     p_UDP_RX_DATA    : in  std_logic_vector(31 downto 0);
@@ -115,6 +117,8 @@ architecture rtl of udp_parser is
   signal ram_write_buf  : std_logic_vector(127 downto 0) := (others => '0');
   signal ram_write_addr : signed(31 downto 0) := (others => '0');
 
+  constant DEFAULT_ADDA_SAMPLING_POINTS : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
+
 ----- begin rtl -----
 begin
 ----- begin local connections
@@ -158,6 +162,7 @@ begin
         w_ram_addr     <= (others => '0');
         
         led <= '0';
+        p_ADDA_SAMPLING_POINTS_WE <= '0';
       else
         case state is
           when STATE_IDLE =>
@@ -180,6 +185,8 @@ begin
             p_ADC_KICK        <= '0';
             p_DAC_KICK        <= '0';
             p_ADC_KICK_AFTER_DAC_START <= '0';
+            p_ADDA_SAMPLING_POINTS_WE <= '0';
+            p_ADDA_SAMPLING_POINTS <= DEFAULT_ADDA_SAMPLING_POINTS;
           when STATE_RX_UDP =>
             p_UDP_RX_ACK <= '0';
             if p_UDP_RX_ENABLE = '0' then
@@ -430,17 +437,23 @@ begin
 ---------- end STATE_CMD_DRAM_WRITE
 --------- begin STATE_CMD_AD_START
           when STATE_CMD_AD_START =>
+            if p_UDP_RX_ENABLE = '1' then
+              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+            end if;
             case adc_state is
               when ADC_KICK =>
                 p_ADC_ADDR_RESET <= '0';
                 p_ADC_KICK <= '1';
                 adc_state <= ADC_START_WAIT;
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when ADC_START_WAIT =>
                 if p_ADC_RUN = '1' then
                   p_ADC_KICK <= '0';
                   adc_state <= ADC_STOP_WAIT;
+                  p_ADDA_SAMPLING_POINTS_WE <= '0';
                 else
                   p_ADC_KICK <= '1';
+                  p_ADDA_SAMPLING_POINTS_WE <= '1';
                 end if;
               when ADC_STOP_WAIT =>
                 if p_ADC_RUN = '0' and p_UDP_RX_ENABLE = '0' then
@@ -451,16 +464,22 @@ begin
 --------- end STATE_CMD_AD_START
 --------- begin STATE_CMD_DA_START
           when STATE_CMD_DA_START =>
+            if p_UDP_RX_ENABLE = '1' then
+              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+            end if;
             case dac_state is
               when DAC_KICK =>
                 p_DAC_KICK <= '1';
                 dac_state <= DAC_START_WAIT;
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
               when DAC_START_WAIT =>
                 if p_DAC_RUN = '1' then
                   p_DAC_KICK <= '0';
                   dac_state <= DAC_STOP_WAIT;
+                  p_ADDA_SAMPLING_POINTS_WE <= '0';
                 else
                   p_DAC_KICK <= '1';
+                  p_ADDA_SAMPLING_POINTS_WE <= '1';
                 end if;
               when DAC_STOP_WAIT =>
                 if p_DAC_RUN = '0' and p_UDP_RX_ENABLE = '0' then
@@ -471,13 +490,16 @@ begin
 --------- end STATE_CMD_DA_START
 --------- begin STATE_CMD_DA_AD_START
           when STATE_CMD_DA_AD_START =>
+            if p_UDP_RX_ENABLE = '1' then
+              p_ADDA_SAMPLING_POINTS <= p_UDP_RX_DATA;
+            end if;
             case dac_adc_state is
-                            
               when DAC_ADC_KICK =>
                 p_DAC_KICK <= '1';
                 p_ADC_KICK_AFTER_DAC_START <= '1';
                 dac_adc_state <= DAC_ADC_START_WAIT;
                 p_ADC_ADDR_RESET <= '0';
+                p_ADDA_SAMPLING_POINTS_WE <= '1';
                 
               when DAC_ADC_START_WAIT =>
                 if p_DAC_RUN = '1' then
@@ -488,8 +510,10 @@ begin
                 if p_ADC_RUN = '1' then -- ADC must start after DAC started
                   p_ADC_KICK_AFTER_DAC_START <= '0';
                   dac_adc_state <= DAC_ADC_STOP_WAIT;
+                  p_ADDA_SAMPLING_POINTS_WE <= '0';
                 else
                   p_ADC_KICK_AFTER_DAC_START <= '1';
+                  p_ADDA_SAMPLING_POINTS_WE <= '1';
                 end if;
                 
               when DAC_ADC_STOP_WAIT =>

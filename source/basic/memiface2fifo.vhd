@@ -7,7 +7,6 @@ use unisim.vcomponents.all;
 
 entity memiface2fifo is
   generic (
-    MAX_COUNT : integer := 1024 * 1024; -- 1M
     TX_COUNT_STEP : integer := 256;
     RX_COUNT_STEP : integer := 4
     );
@@ -19,6 +18,7 @@ entity memiface2fifo is
     p_BUSY : out std_logic;
 
     p_DDR3_MEMORY_OFFSET : in std_logic_vector(31 downto 0);
+    p_READ_WRITE_COUNT : in std_logic_vector(31 downto 0);
     
     p_FIFO_DATA_OUT   : out  std_logic_vector(127 downto 0);
     p_FIFO_DATA_WE    : out std_logic;
@@ -67,14 +67,11 @@ architecture RTL of memiface2fifo is
   attribute keep of rx_count_d  : signal is "true";
   attribute keep of prog_full_d : signal is "true";
 
-  
+  signal w_read_count : unsigned(31 downto 0);
+
 begin
 
   p_BUSY <= reg_busy;
-
-
-  
-
 
   EMIT_REQUEST : process(p_Clk)
   begin
@@ -98,6 +95,7 @@ begin
             tx_count               <= (others => '0');
             p_MemIface_UPL_Enable  <= '0';
             p_MemIface_UPL_Request <= '0';
+            w_read_count <= unsigned(p_READ_WRITE_COUNT);
             
           ---------------------------------------------------------------------
           -- RUN
@@ -121,7 +119,8 @@ begin
               p_MemIface_UPL_Request <= '0';
               tx_count               <= tx_count + TX_COUNT_STEP;
 
-              if tx_count = MAX_COUNT - TX_COUNT_STEP then  -- last request
+              --if tx_count = MAX_COUNT - TX_COUNT_STEP then  -- last request
+              if tx_count = w_read_count - TX_COUNT_STEP then  -- last request
                 emit_state <= EMIT_IDLE;
                 address    <= unsigned(p_DDR3_MEMORY_OFFSET);
               else
@@ -208,7 +207,8 @@ begin
             end if;
             
             if p_MemIface_UPL_Reply_En = '0' then  -- End of UPL Packet Receiving
-              if rx_count = MAX_COUNT then
+              --if rx_count = MAX_COUNT then
+              if rx_count = w_read_count then
                 recv_state <= RECV_IDLE;
               else
                 recv_state <= RECV_RUN;            -- wait for next read reply

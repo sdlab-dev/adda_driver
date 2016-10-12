@@ -172,6 +172,8 @@ architecture RTL of top is
       p_DAC_KICK                 : out std_logic;
       p_DAC_RUN                  : in  std_logic;
       p_ADC_KICK_AFTER_DAC_START : out std_logic;
+      p_ADDA_SAMPLING_POINTS     : out std_logic_vector(31 downto 0);
+      p_ADDA_SAMPLING_POINTS_WE  : out std_logic;
 
       --UDP input
       p_UDP_RX_DATA    : in  std_logic_vector(31 downto 0);
@@ -243,6 +245,9 @@ architecture RTL of top is
   end component udp_packet_send_in_fifo_with_trigger;
 
   component adc_sample
+    generic (
+      MAX_SAMPLING_POINTS : integer := 512 * 1024 * 1024
+      );
     port (
       p_Clk : in std_logic;
       p_Reset : in std_logic;
@@ -254,10 +259,13 @@ architecture RTL of top is
       p_ADC_DATA_RE    : in  std_logic;
       p_ADC_DATA_COUNT : out std_logic_vector(31 downto 0);
 
+      p_SAMPLING_POINTS : in std_logic_vector(31 downto 0);
+
       -- p_ADC_Clk domain
       p_ADC_CLK    : in std_logic;
       p_ADC_DATA_A : in std_logic_vector(15 downto 0);
       p_ADC_DATA_B : in std_logic_vector(15 downto 0)
+      
       );
   end component adc_sample;
 
@@ -286,7 +294,7 @@ architecture RTL of top is
 
   component dac_sample
     generic (
-      MAX_COUNT : integer := 1024 * 1024
+      MAX_COUNT : integer := 512 * 1024 * 1024
       );
     port (
       p_Clk : in std_logic;
@@ -299,18 +307,20 @@ architecture RTL of top is
       p_DAC_DATA_WE    : in  std_logic;
       p_DAC_PROG_FULL  : out std_logic;
 
+      p_SAMPLING_POINTS : in std_logic_vector(31 downto 0);
+
       -- p_DAC_Clk domain
       p_DAC_CLK    : in std_logic;
       p_DAC_DATA_A : out std_logic_vector(15 downto 0);
       p_DAC_DATA_B : out std_logic_vector(15 downto 0);
       p_DAC_DATA_EN_PRE : out std_logic;
       p_DAC_DATA_EN     : out std_logic
+
       );
   end component dac_sample;
 
   component memiface2fifo
     generic (
-      MAX_COUNT : integer := 1024 * 1024; -- 1M
       TX_COUNT_STEP : integer := 256;
       RX_COUNT_STEP : integer := 4
       );
@@ -322,6 +332,7 @@ architecture RTL of top is
       p_BUSY : out std_logic;
     
       p_DDR3_MEMORY_OFFSET : in std_logic_vector(31 downto 0);
+      p_READ_WRITE_COUNT : in std_logic_vector(31 downto 0);
       
       p_FIFO_DATA_OUT   : out  std_logic_vector(127 downto 0);
       p_FIFO_DATA_WE    : out std_logic;
@@ -620,6 +631,12 @@ architecture RTL of top is
   signal w_dac_run_1                  : std_logic;
   signal w_adc_kick_after_dac_start_1 : std_logic;
 
+  signal w_adda_sampling_points      : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
+  signal w_adda_sampling_points_0    : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
+  signal w_adda_sampling_points_1    : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(1 * 1024 * 1024, 32));
+  signal w_adda_sampling_points_we_0 : std_logic;
+  signal w_adda_sampling_points_we_1 : std_logic;
+
 begin
 
   MyIpAddr         <= X"0a000001";
@@ -839,6 +856,8 @@ begin
     p_DAC_KICK                 => w_dac_kick_0,
     p_DAC_RUN                  => w_dac_run_0,
     p_ADC_KICK_AFTER_DAC_START => w_adc_kick_after_dac_start_0,
+    p_ADDA_SAMPLING_POINTS     => w_adda_sampling_points_0,
+    p_ADDA_SAMPLING_POINTS_WE  => w_adda_sampling_points_we_0,
     
     -- 入力
     p_UDP_RX_DATA    => Udp0Receive_Data,
@@ -1003,10 +1022,13 @@ begin
       p_ADC_DATA_RE    => w_adc_data_re,
       p_ADC_DATA_COUNT => w_adc_data_count,
 
+      p_SAMPLING_POINTS => w_adda_sampling_points,
+
       -- p_ADC_Clk domain
       p_ADC_CLK    => w_adc_out_clk,
       p_ADC_DATA_A => w_adc_out_a,
       p_ADC_DATA_B => w_adc_out_b
+
       );
 
   U_FIFO2MEMIFACE : fifo2memiface
@@ -1033,7 +1055,7 @@ begin
 
   U_DAC_SAMPLE: dac_sample
     generic map(
-      MAX_COUNT => 1024 * 1024 -- 1M (1024*1024) samples
+      MAX_COUNT => 512 * 1024 * 1024 -- 512M (1024*1024) samples
       )
     port map(
       p_Clk => UPLGlobalClk,
@@ -1046,17 +1068,19 @@ begin
       p_DAC_DATA_WE    => w_dac_sample_we,
       p_DAC_PROG_FULL  => w_dac_sample_prog_full,
 
+      p_SAMPLING_POINTS => w_adda_sampling_points,
+
       -- p_DAC_Clk domain
       p_DAC_CLK    => w_dac_out_clk,
       p_DAC_DATA_A => w_dac_mem_out_a,
       p_DAC_DATA_B => w_dac_mem_out_b,
       p_DAC_DATA_EN_PRE => w_dac_data_en_pre,
       p_DAC_DATA_EN     => w_dac_data_en
+      
       );
 
   U_MEMIFACE2FIFO: memiface2fifo
     generic map(
-      MAX_COUNT => 1024 * 1024, -- 1M (1024*1024) samples
       TX_COUNT_STEP => 256, -- "1024 byte" corresponds to "256 samples for 2ch",
                             -- because a sample/ch is 2Byte.
       RX_COUNT_STEP => 4 -- "128 bit" corresponds to "4 samples for 2ch",
@@ -1070,6 +1094,7 @@ begin
       p_BUSY => w_memiface2fifo_busy,
     
       p_DDR3_MEMORY_OFFSET => std_logic_vector(to_unsigned(512 * 1024 * 1024, 32)),
+      p_READ_WRITE_COUNT => w_adda_sampling_points,
 
       p_FIFO_DATA_OUT   => w_dac_sample_din,
       p_FIFO_DATA_WE    => w_dac_sample_we,
@@ -1164,6 +1189,8 @@ begin
     p_DAC_KICK                 => w_dac_kick_1,
     p_DAC_RUN                  => w_dac_run_1,
     p_ADC_KICK_AFTER_DAC_START => w_adc_kick_after_dac_start_1,
+    p_ADDA_SAMPLING_POINTS     => w_adda_sampling_points_1,
+    p_ADDA_SAMPLING_POINTS_WE  => w_adda_sampling_points_we_1,
     
     -- 入力
     p_UDP_RX_DATA    => w_f32c_to_parser.data,
@@ -1196,5 +1223,9 @@ begin
 
     p_DEBUG => open
     );
+
+  w_adda_sampling_points <= w_adda_sampling_points_0 when w_adda_sampling_points_we_0 = '1' else
+                            w_adda_sampling_points_1 when w_adda_sampling_points_we_1 = '1' else
+                            w_adda_sampling_points;
 
 end RTL;

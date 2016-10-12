@@ -7,7 +7,7 @@ use unisim.vcomponents.all;
 
 entity dac_sample is
   generic (
-    MAX_COUNT : integer := 1024 * 1024 -- 1M
+    MAX_COUNT : integer := 512 * 1024 * 1024 -- 512M
     );
   port (
     p_Clk : in std_logic;
@@ -20,12 +20,15 @@ entity dac_sample is
     p_DAC_DATA_WE    : in  std_logic;
     p_DAC_PROG_FULL  : out std_logic;
 
+    p_SAMPLING_POINTS : in std_logic_vector(31 downto 0);
+
     -- p_DAC_Clk domain
     p_DAC_CLK         : in  std_logic;
     p_DAC_DATA_A      : out std_logic_vector(15 downto 0);
     p_DAC_DATA_B      : out std_logic_vector(15 downto 0);
     p_DAC_DATA_EN_PRE : out std_logic;
     p_DAC_DATA_EN     : out std_logic
+    
     );
 end dac_sample;
 
@@ -95,6 +98,11 @@ architecture RTL of dac_sample is
   attribute keep of w_fifo_empty_d      : signal is "true";
   attribute keep of w_fifo_prog_empty_d : signal is "true";
 
+  signal w_sampling_points : unsigned(31 downto 0);
+  
+  attribute mark_debug of w_sampling_points : signal is "true";
+  attribute keep of w_sampling_points : signal is "true";
+  
 begin
 
   w_dac_sample_kick <= p_DAC_KICK;
@@ -157,6 +165,7 @@ begin
             w_fifo_re         <= '0';
             p_DAC_DATA_EN     <= '0';
             p_DAC_DATA_EN_PRE <= '0';
+            w_sampling_points <= unsigned(p_SAMPLING_POINTS);
           ------------------------------------------
 
           ------------------------------------------
@@ -189,7 +198,8 @@ begin
             p_DAC_DATA_EN     <= '1';
             p_DAC_DATA_EN_PRE <= '0';
             
-            if emit_counter < MAX_COUNT then -- before 1M (1024*1024) samples
+            --if emit_counter < MAX_COUNT then -- before 1M (1024*1024) samples
+            if (emit_counter < w_sampling_points) and (emit_counter < MAX_COUNT) then
               emit_counter <= emit_counter + 1;
             else
               emit_counter <= (others => '0');
@@ -197,7 +207,8 @@ begin
             end if;
             
 
-            if emit_counter < MAX_COUNT then -- before 1M (1024*1024) samples
+            --if emit_counter < MAX_COUNT then -- before 1M (1024*1024) samples
+            if (emit_counter < w_sampling_points) and (emit_counter < MAX_COUNT) then
 
               p_DAC_DATA_A <= buf_reg_a(63 downto 48);
               p_DAC_DATA_B <= buf_reg_b(63 downto 48);
